@@ -11,7 +11,6 @@ from . import world
 class Game:
     def __init__(self, window):
         self._window = window
-        self._tick = 0
         self._world = world.World(1)
         self._rand = random.Random()
         self._grid = self._create_grid()
@@ -28,9 +27,6 @@ class Game:
     def world(self):
         return self._world
 
-    @property
-    def tick(self):
-        return self._tick
 
     @property
     def rand(self):
@@ -53,7 +49,6 @@ class Game:
 
     def update(self, dt):
         logging.debug(f'Update (dt={dt})')
-        self._tick += 1
         self._world.update(self)
 
     def run(self):

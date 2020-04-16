@@ -8,6 +8,9 @@ class Entity:
     def __init__(self):
         self._dir = location.Direction.E
         self._color = util.draw.Color.WHITE
+        self._circle = util.draw.Circle(
+            position=(0, 0), radius=location.X_SCALE//2,
+            color=self._color)
 
         self._loc = None
         self._layer = None
@@ -15,6 +18,14 @@ class Entity:
     @property
     def loc(self):
         return self._loc
+
+    @loc.setter
+    def loc(self, value):
+        self._loc = value
+        if self._loc is None:
+            self._circle.update(visible=False)
+        else:
+            self._circle.update(position=self._loc.real_pos(), visible=True)
 
     @property
     def location(self):
@@ -29,8 +40,3 @@ class Entity:
         new_dir = self._dir.turn(game.rand.randint(-2, 2)//2)
         self._dir = new_dir
         self.try_move(new_loc)
-
-    def draw(self, state, order):
-        util.draw.circle(
-            state, position=self._loc.real_pos(), radius=location.X_SCALE//2,
-            color=self._color, order=order)

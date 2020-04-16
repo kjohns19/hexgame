@@ -14,15 +14,13 @@ class Game:
         self._tick = 0
         self._world = world.World(1)
         self._rand = random.Random()
+        self._grid = self._create_grid()
 
         @self._window.event
         def on_draw():
+            logging.debug('Draw')
             self._window.clear()
-            pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-            pyglet.gl.glBlendFunc(
-                pyglet.gl.GL_SRC_ALPHA,
-                pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
-            self.draw()
+            util.draw.state().draw()
 
         pyglet.clock.schedule_interval(self.update, 1/10)
 
@@ -38,22 +36,20 @@ class Game:
     def rand(self):
         return self._rand
 
-    def draw(self):
-        logging.debug('Draw')
-        state = util.draw.DrawState(origin=(400, 400), translation=None, scale=1)
-
-        radian_offset = math.pi/6
+    def _create_grid(self):
+        grid = []
         count = 10
-        for x in range(-count, count):
-            for y in range(-count, count):
+        radian_offset = math.pi/6
+        for y in range(-count, count):
+            row = []
+            for x in range(-count, count):
                 loc = location.Location(x, y)
-                util.draw.circle(
-                    state, loc.real_pos(), location.X_SCALE/2-1,
-                    num_vertices=6, radian_offset=radian_offset, fill=False)
-
-        self._world.draw(state)
-
-        state.batch.draw()
+                row.append(util.draw.Circle(
+                    loc.real_pos(), location.X_SCALE/2-1,
+                    num_vertices=6, radian_offset=radian_offset,
+                    fill=False))
+            grid.append(row)
+        return grid
 
     def update(self, dt):
         logging.debug(f'Update (dt={dt})')

@@ -1,3 +1,4 @@
+import functools
 import itertools
 import math
 import pyglet
@@ -43,89 +44,178 @@ Color.CYAN    = Color(0, 255, 255)
 Color.NONE    = Color(0, 0, 0, 0)
 
 
-class CustomGroup(pyglet.graphics.Group):
-    def __init__(self, origin, translation, scale, parent=None):
+class TransformGroup(pyglet.graphics.Group):
+    def __init__(self, translation=None, parent=None):
         super().__init__(parent)
-        self._origin = origin
-        self._translation = translation
-        self._scale = scale
+        self._translation = translation or (0, 0)
+
+    @property
+    def translation(self):
+        return self._translation
+
+    @translation.setter
+    def translation(self, value):
+        self._translation = value or (0, 0)
+
+    def translate(self, xy):
+        self._translation = (
+            self._translation[0] + xy[0],
+            self._translation[1] + xy[1]
+        )
 
     def set_state(self):
         pyglet.gl.glPushMatrix()
-        pyglet.gl.glTranslatef(*self._origin, 0)
-        pyglet.gl.glScalef(self._scale, self._scale, 1)
-        if self._translation:
-            pyglet.gl.glTranslatef(*-self._translation, 0)
+        pyglet.gl.glTranslatef(self._translation[0], self._translation[1], 0)
 
     def unset_state(self):
         pyglet.gl.glPopMatrix()
 
 
 class DrawState:
-    def __init__(self, origin, translation, scale):
+    def __init__(self):
         super().__init__()
-        self._origin = origin
-        self._translation = translation
-        self._scale = scale
         self._batch = pyglet.graphics.Batch()
+        self._transform = TransformGroup(translation=(400, 400))
         self._ordered_groups = {}
 
     @property
     def batch(self):
         return self._batch
 
+    def draw(self):
+        self._batch.draw()
+
     def group(self, order=0):
         order_group = self._ordered_groups.get(order)
         if order_group is None:
-            order_group = pyglet.graphics.OrderedGroup(order)
+            order_group = pyglet.graphics.OrderedGroup(order, self._transform)
             self._ordered_groups[order] = order_group
-        return CustomGroup(
-            self._origin, self._translation, self._scale, parent=order_group)
+        return order_group
 
 
-def circle(state, position, radius, color=Color.WHITE,
-           num_vertices=32, radian_offset=0, fill=True, order=0):
-    if num_vertices < 3:
-        raise ValueError('Cannot draw circle with < 3 vertices!')
+@functools.lru_cache(1)
+def state():
+    return DrawState()
 
-    radians = (
-        i * 2*math.pi/num_vertices + radian_offset
-        for i in range(num_vertices)
-    )
 
-    x, y = position
+class Circle:
+    def __init__(self, position, radius, color=Color.WHITE,
+                 num_vertices=32, radian_offset=0, fill=True, order=0):
+        if num_vertices < 3:
+            raise ValueError('Cannot draw circle with < 3 vertices!')
+        self._batch = state().batch
+        self._group = state().group(order)
+        self._color = color
+        self._position = position
+        self._radius = radius
+        self._color = color
+        self._num_vertices = num_vertices
+        self._radian_offset = radian_offset
+        self._fill = fill
+        self._visible = True
+        self._create_vertex_list()
 
-    edge_vertices = (
-        (x+radius*math.cos(rad), y+radius*math.sin(rad))
-        for rad in radians
-    )
+    def __del__(self):
+        try:
+            if self._vertices is not None:
+                self._vertices.delete()
+        except Exception:
+            pass
 
-    if not fill:
-        positions = list(edge_vertices)
-        lines(state, positions+positions[0:2], color=color, order=order)
-        return
+    def delete(self):
+        self._vertices.delete()
+        self._vertices = None
 
-    def pairs(iterable):
-        first = next(iterable)
-        prev = first
-        for elem in iterable:
-            yield (prev, elem)
-            prev = elem
-        yield (elem, first)
+    def update(self, position=None, radius=None, color=None,
+               num_vertices=None, radian_offset=None, fill=None, visible=None):
+        recreate_vertices = False
+        update_vertices = False
+        update_color = False
+        if position is not None and position != self._position:
+            self._position = position
+            update_vertices = True
+        if radius is not None and radius != self._radius:
+            self._radius = radius
+            update_vertices = True
+        if color is not None and color != self._color:
+            self._color = color
+            update_color = color
+        if num_vertices is not None and num_vertices != self._num_vertices:
+            if num_vertices < 3:
+                raise ValueError('Cannot draw circle with < 3 vertices!')
+            self._num_vertices = num_vertices
+            recreate_vertices = True
+        if radian_offset is not None and radian_offset != self._radian_offset:
+            self._radian_offset = radian_offset
+            update_vertices = True
+        if fill is not None and fill != self._fill:
+            self._fill = fill
+            recreate_vertices = True
+        if visible is not None and visible != self._visible:
+            self._visible = visible
+            update_vertices = True
 
-    vertices = (
-        (x, y, *p1, *p2)
-        for p1, p2 in pairs(edge_vertices)
-    )
-    flattened = tuple(itertools.chain.from_iterable(vertices))
+        if recreate_vertices:
+            self._vertices.delete()
+            self._create_vertex_list()
+        else:
+            if update_vertices:
+                self._update_vertices()
+            if update_color:
+                self._update_color()
 
-    count = num_vertices*3
+    def _create_vertex_list(self):
+        def pairs():
+            values = iter(range(self._num_vertices))
+            first = next(values)
+            prev = first
+            for elem in values:
+                yield (prev, elem)
+                prev = elem
+            yield (elem, first)
 
-    state.batch.add(
-        count, pyglet.gl.GL_TRIANGLES, state.group(order),
-        ('v2f', flattened),
-        ('c4B', color.values * count)
-    )
+        def triangles():
+            values = list(range(self._num_vertices))
+            while len(values) >= 3:
+                yield tuple(values[0:3])
+                values.append(values[0])
+                del values[0:2]
+
+        if self._fill:
+            indices = tuple(itertools.chain.from_iterable(triangles()))
+            self._vertices = self._batch.add_indexed(
+                self._num_vertices, pyglet.gl.GL_TRIANGLES, self._group,
+                indices, 'v2f', 'c4B')
+        else:
+            indices = tuple(itertools.chain.from_iterable(pairs()))
+            self._vertices = self._batch.add_indexed(
+                self._num_vertices, pyglet.gl.GL_LINES, self._group,
+                indices, 'v2f', 'c4B')
+
+        self._update_vertices()
+        self._update_color()
+
+    def _update_vertices(self):
+        if not self._visible:
+            self._vertices.vertices[:] = [0, 0]*self._num_vertices
+            return
+
+        radians = (
+            i * 2*math.pi/self._num_vertices + self._radian_offset
+            for i in range(self._num_vertices)
+        )
+
+        x, y = self._position
+
+        vertices = (
+            (x+self._radius*math.cos(rad), y+self._radius*math.sin(rad))
+            for rad in radians
+        )
+
+        self._vertices.vertices[:] = list(itertools.chain.from_iterable(vertices))
+
+    def _update_color(self):
+        self._vertices.colors[:] = self._color.values * self._num_vertices
 
 
 def line(state, position1, position2, color=Color.WHITE, order=0):

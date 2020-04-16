@@ -21,16 +21,16 @@ class World:
             assert ent._layer is None, 'Trying to add entity already in layer!'
             added = (self._ents.setdefault(loc, ent) is ent)
             if added:
-                ent._loc = loc
+                ent.loc = loc
                 ent._layer = self
             return added
 
         def move_entity(self, ent, loc):
             assert ent._layer is self, 'Trying to move entity not in layer!'
             if self.is_empty(loc):
-                del self._ents[ent._loc]
+                del self._ents[ent.loc]
                 self._ents[loc] = ent
-                ent._loc = loc
+                ent.loc = loc
                 return True
             return False
 
@@ -41,7 +41,7 @@ class World:
         def remove_entity(self, ent):
             assert ent._layer is self, 'Trying to remove entity not in layer!'
             del self._ents[ent._Loc]
-            ent._loc = None
+            ent.loc = None
             ent._layer = None
 
         def entities(self):
@@ -59,8 +59,3 @@ class World:
             for ent in ents:
                 if ent._layer is layer:
                     ent.update(game)
-
-    def draw(self, state):
-        for layer in self._layers:
-            for ent in layer.entities():
-                ent.draw(state, layer.index)

@@ -44,7 +44,7 @@ Color.CYAN    = Color(0, 255, 255)
 Color.NONE    = Color(0, 0, 0, 0)
 
 
-class TransformGroup(pyglet.graphics.Group):
+class ViewGroup(pyglet.graphics.Group):
     def __init__(self, translation=None, parent=None):
         super().__init__(parent)
         self._translation = translation or (0, 0)
@@ -75,12 +75,16 @@ class DrawState:
     def __init__(self):
         super().__init__()
         self._batch = pyglet.graphics.Batch()
-        self._transform = TransformGroup(translation=(400, 400))
+        self._view = ViewGroup(translation=(400, 400))
         self._ordered_groups = {}
 
     @property
     def batch(self):
         return self._batch
+
+    @property
+    def view(self):
+        return self._view
 
     def draw(self):
         self._batch.draw()
@@ -88,7 +92,7 @@ class DrawState:
     def group(self, order=0):
         order_group = self._ordered_groups.get(order)
         if order_group is None:
-            order_group = pyglet.graphics.OrderedGroup(order, self._transform)
+            order_group = pyglet.graphics.OrderedGroup(order, self._view)
             self._ordered_groups[order] = order_group
         return order_group
 

@@ -179,11 +179,12 @@ class Circle:
             yield (elem, first)
 
         def triangles():
-            values = list(range(self._num_vertices))
-            while len(values) >= 3:
-                yield tuple(values[0:3])
-                values.append(values[0])
-                del values[0:2]
+            values = iter(range(self._num_vertices))
+            first = next(values)
+            second = next(values)
+            for third in values:
+                yield (first, second, third)
+                second = third
 
         if self._fill:
             indices = tuple(itertools.chain.from_iterable(triangles()))

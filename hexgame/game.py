@@ -38,17 +38,16 @@ class Game:
         return self._rand
 
     def _create_grid(self):
+        tile_image = pyglet.image.load('data/tile.png')
         grid = []
-        count = 10
-        radian_offset = math.pi/6
-        for y in range(-count, count):
+        count = 30
+        for y in range(-count, count+1):
             row = []
-            for x in range(-count, count):
+            for x in range(-count, count+1):
                 loc = location.Location(x, y)
-                row.append(util.draw.Circle(
-                    loc.real_pos(), location.X_SCALE/2-1,
-                    num_vertices=6, radian_offset=radian_offset,
-                    fill=False))
+                pos = loc.real_pos()
+                row.append(
+                    util.draw.make_sprite(tile_image, x=pos[0], y=pos[1], order=0))
             grid.append(row)
         return grid
 

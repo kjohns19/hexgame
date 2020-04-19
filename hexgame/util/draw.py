@@ -102,6 +102,12 @@ def state():
     return DrawState()
 
 
+def make_sprite(image, *args, order=0, **kwargs):
+    batch = state().batch
+    group = state().group(order)
+    return pyglet.sprite.Sprite(image, *args, batch=batch, group=group, **kwargs)
+
+
 class Circle:
     def __init__(self, position, radius, color=Color.WHITE,
                  num_vertices=32, radian_offset=0, fill=True, order=0):

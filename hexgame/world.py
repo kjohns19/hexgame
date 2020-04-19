@@ -9,6 +9,10 @@ class World:
         def index(self):
             return self._index
 
+        @property
+        def world(self):
+            return self._world
+
         def get_entity(self, loc):
             ''' Return the entity at the location, or None if there isn't one '''
             return self._ents.get(loc)
@@ -21,8 +25,9 @@ class World:
             assert ent._layer is None, 'Trying to add entity already in layer!'
             added = (self._ents.setdefault(loc, ent) is ent)
             if added:
-                ent.loc = loc
+                ent._loc = loc
                 ent._layer = self
+                ent._update_position()
             return added
 
         def move_entity(self, ent, loc):
@@ -30,7 +35,8 @@ class World:
             if self.is_empty(loc):
                 del self._ents[ent.loc]
                 self._ents[loc] = ent
-                ent.loc = loc
+                ent._loc = loc
+                ent._update_position()
                 return True
             return False
 
@@ -40,9 +46,10 @@ class World:
 
         def remove_entity(self, ent):
             assert ent._layer is self, 'Trying to remove entity not in layer!'
-            del self._ents[ent._Loc]
-            ent.loc = None
+            del self._ents[ent._loc]
+            ent._loc = None
             ent._layer = None
+            ent._update_position()
 
         def entities(self):
             return self._ents.values()

@@ -20,7 +20,7 @@ class Entity:
         self._loc = None
         self._layer = None
         self._sprite = None
-        self.signal_event('create')
+        self.signal_event('birth')
 
     @property
     def loc(self):
@@ -51,7 +51,7 @@ class Entity:
         if self._layer is not None:
             self._layer.remove_entity(self)
             self._sprite.delete()
-            self.signal_event('die')
+            self.signal_event('death')
 
     def try_move(self, loc):
         assert self._layer is not None, 'Can\'t move an entity not in a layer!'

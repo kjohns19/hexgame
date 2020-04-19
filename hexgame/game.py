@@ -18,6 +18,7 @@ class Game:
         self._keys = pyglet.window.key.KeyStateHandler()
         self._view_controller = ViewController(util.draw.state().view)
         self._stats = stats.EntityStats()
+        self._stats.print_header()
         self._tick = 0
 
         @self._window.event

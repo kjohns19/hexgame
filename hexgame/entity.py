@@ -63,8 +63,8 @@ class Entity:
 
 class AliveMixin:
     def __init__(self, *args, max_life=None, **kwargs):
-        super().__init__(*args, **kwargs)
         self._life = max_life
+        super().__init__(*args, **kwargs)
 
     def age(self, game):
         self._life -= 1
@@ -75,10 +75,15 @@ class AliveMixin:
 
 
 class ReproducibleMixin:
-    def __init__(self, *args, max_reproduce, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, max_reproduce, generation, **kwargs):
         self._reproduce = max_reproduce
         self._max_reproduce = max_reproduce
+        self._generation = generation
+        super().__init__(*args, **kwargs)
+
+    @property
+    def generation(self):
+        return self._generation
 
     def make_child(self, game):
         raise RuntimeError('Not implemented!')
@@ -97,8 +102,8 @@ class ReproducibleMixin:
 class Creature(AliveMixin, ReproducibleMixin, Entity):
     image = pyglet.image.load('data/creature.png')
 
-    def __init__(self, satiation=1000, birth_cost=200):
-        super().__init__(max_life=1000, max_reproduce=500)
+    def __init__(self, generation=1, satiation=1000, birth_cost=200):
+        super().__init__(generation=generation, max_life=1000, max_reproduce=500)
         self._dir = location.Direction.E
         self._sprite = util.draw.make_sprite(Creature.image, order=2)
         self._satiation = satiation
@@ -108,7 +113,7 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
     def make_child(self, game):
         self._satiation -= self._birth_cost
         child_birth_cost = max(0, self._birth_cost + game.rand.randint(-2, 2))
-        return Creature(self._satiation, child_birth_cost)
+        return Creature(self.generation + 1, self._satiation, child_birth_cost)
 
     def update(self, game):
         if self.age(game):
@@ -139,8 +144,8 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
 class Plant(AliveMixin, ReproducibleMixin, Entity):
     image = pyglet.image.load('data/plant.png')
 
-    def __init__(self):
-        super().__init__(max_life=1000, max_reproduce=100)
+    def __init__(self, generation=1):
+        super().__init__(generation=generation, max_life=1000, max_reproduce=100)
         self._sprite = util.draw.make_sprite(Plant.image, order=1)
 
     @property
@@ -149,7 +154,7 @@ class Plant(AliveMixin, ReproducibleMixin, Entity):
 
     def make_child(self, game):
         self._life -= 100
-        return Plant()
+        return Plant(self.generation + 1)
 
     def update(self, game):
         if self.age(game):

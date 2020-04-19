@@ -15,12 +15,13 @@ class EntityStats:
         if event == 'birth':
             counts['Births'] += 1
             counts['Count'] += 1
+            counts['Generation'] = max(counts['Generation'], ent.generation)
         elif event == 'death':
             counts['Deaths'] += 1
             counts['Count'] -= 1
 
     def _initial_values(self):
-        return {'Count': 0, 'Births': 0, 'Deaths': 0}
+        return {'Count': 0, 'Births': 0, 'Deaths': 0, 'Generation': 0}
 
     def print_header(self):
         column_names = self._initial_values().keys()

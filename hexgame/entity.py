@@ -5,11 +5,22 @@ from . import util
 
 
 class Entity:
+    _event_listeners = []
+
+    @staticmethod
+    def add_event_listener(listener):
+        Entity._event_listeners.append(listener)
+
+    @staticmethod
+    def remove_event_listener(listener):
+        Entity._event_listeners.remove(listener)
+
     def __init__(self):
         super().__init__()
         self._loc = None
         self._layer = None
         self._sprite = None
+        self.signal_event('create')
 
     @property
     def loc(self):
@@ -22,6 +33,10 @@ class Entity:
     @property
     def world(self):
         return None if self._layer is None else self._layer.world
+
+    def signal_event(self, event):
+        for listener in Entity._event_listeners:
+            listener(self, event)
 
     def _update_position(self):
         if self._sprite is not None:
@@ -36,6 +51,7 @@ class Entity:
         if self._layer is not None:
             self._layer.remove_entity(self)
             self._sprite.delete()
+            self.signal_event('die')
 
     def try_move(self, loc):
         assert self._layer is not None, 'Can\'t move an entity not in a layer!'

@@ -4,6 +4,7 @@ import pyglet
 import random
 
 from . import location
+from . import stats
 from . import util
 from . import world
 
@@ -16,6 +17,8 @@ class Game:
         self._grid = self._create_grid()
         self._keys = pyglet.window.key.KeyStateHandler()
         self._view_controller = ViewController(util.draw.state().view)
+        self._stats = stats.EntityStats()
+        self._tick = 0
 
         @self._window.event
         def on_draw():
@@ -55,6 +58,9 @@ class Game:
         logging.debug(f'Update (dt={dt})')
         self._view_controller.update(self)
         self._world.update(self)
+        if self._tick % 10 == 0:
+            self._stats.print_stats()
+        self._tick += 1
 
     def run(self):
         logging.debug('Running')

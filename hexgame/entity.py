@@ -80,7 +80,7 @@ class ReproducibleMixin:
         self._reproduce = max_reproduce
         self._max_reproduce = max_reproduce
 
-    def make_child(self):
+    def make_child(self, game):
         raise RuntimeError('Not implemented!')
 
     def try_reproduce(self, game):
@@ -89,7 +89,7 @@ class ReproducibleMixin:
             dir = game.rand.choice(location.Direction.dirs())
             loc = self.loc.in_direction(dir)
             if self._layer.is_empty(loc):
-                child = self.make_child()
+                child = self.make_child(game)
                 self._layer.add_entity(child, loc)
             self._reproduce = self._max_reproduce
 
@@ -97,16 +97,18 @@ class ReproducibleMixin:
 class Creature(AliveMixin, ReproducibleMixin, Entity):
     image = pyglet.image.load('data/creature.png')
 
-    def __init__(self, satiation=1000):
+    def __init__(self, satiation=1000, birth_cost=200):
         super().__init__(max_life=1000, max_reproduce=500)
         self._dir = location.Direction.E
         self._sprite = util.draw.make_sprite(Creature.image, order=2)
         self._satiation = satiation
+        self._birth_cost = birth_cost
         self._health = 100
 
-    def make_child(self):
-        self._satiation -= 100
-        return Creature(self._satiation)
+    def make_child(self, game):
+        self._satiation -= self._birth_cost
+        child_birth_cost = max(0, self._birth_cost + game.rand.randint(-2, 2))
+        return Creature(self._satiation, child_birth_cost)
 
     def update(self, game):
         if self.age(game):
@@ -145,7 +147,7 @@ class Plant(AliveMixin, ReproducibleMixin, Entity):
     def nourishment(self):
         return max(10, min((1000 - self._life)//5, 100))
 
-    def make_child(self):
+    def make_child(self, game):
         self._life -= 100
         return Plant()
 

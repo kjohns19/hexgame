@@ -24,7 +24,7 @@ class Game:
             util.draw.state().draw()
 
         self._window.push_handlers(self._keys)
-        pyglet.clock.schedule_interval(self.update, 1/10)
+        pyglet.clock.schedule_interval(self.update, 1/30)
 
     @property
     def world(self):

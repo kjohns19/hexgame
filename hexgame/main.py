@@ -3,18 +3,24 @@ import logging.config
 import pyglet
 
 from .game import Game
-from .entity import Entity
-from .location import Location
+from .entity import Creature, Plant
+from . import location
 
 
 def main():
     args = parse_args()
     init_logging(args.verbose)
     config = pyglet.gl.Config(alpha_size=8)
-    window = pyglet.window.Window(config=config, width=800, height=800)
+    window = pyglet.window.Window(config=config, width=1600, height=1100)
     game = Game(window)
-    for i in range(10):
-        game.world.layer(0).add_entity(Entity(), Location(i, 0))
+    for x in range(-20, 21):
+        for y in range(-20, 21):
+            loc = location.Location(x, y)
+            game.world.layer(1).add_entity(Plant(), loc)
+    for x in range(-1, 2):
+        for y in range(-1, 2):
+            loc = location.Location(x, y)
+            game.world.layer(0).add_entity(Creature(), loc)
     game.run()
 
 

@@ -42,6 +42,9 @@ class World:
 
         def is_empty(self, loc):
             ''' Returns True if there is no entity at the location '''
+            size = 30
+            if not (-size <= loc.x <= size and -size <= loc.y <= size):
+                return False
             return self.get_entity(loc) is None
 
         def remove_entity(self, ent):

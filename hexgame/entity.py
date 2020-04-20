@@ -114,6 +114,18 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
         self._diseased = False
         self._disease_resistance = disease_resistance
 
+    @property
+    def diseased(self):
+        return self._diseased
+
+    @property
+    def birth_cost(self):
+        return self._birth_cost
+
+    @property
+    def disease_resistance(self):
+        return self._disease_resistance
+
     def make_child(self, game):
         self._satiation -= self._birth_cost
         child_birth_cost = max(0, self._birth_cost + game.rand.randint(-2, 2))

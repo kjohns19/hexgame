@@ -12,7 +12,7 @@ from . import world
 class Game:
     def __init__(self, window):
         self._window = window
-        self._world = world.World(2)
+        self._world = world.World(3)
         self._rand = random.Random()
         self._grid = self._create_grid()
         self._keys = pyglet.window.key.KeyStateHandler()

@@ -1,3 +1,4 @@
+import collections
 import pyglet
 
 from . import location
@@ -5,15 +6,21 @@ from . import util
 
 
 class Entity:
-    _event_listeners = []
+    _event_listeners = collections.defaultdict(lambda: collections.defaultdict(list))
 
     @staticmethod
-    def add_event_listener(listener):
-        Entity._event_listeners.append(listener)
-
-    @staticmethod
-    def remove_event_listener(listener):
-        Entity._event_listeners.remove(listener)
+    def add_event_listener(listener, entity_types=None, event_types=None):
+        if entity_types is None:
+            entity_keys = [None]
+        else:
+            entity_keys = entity_types
+        if event_types is None:
+            event_keys = [None]
+        else:
+            event_keys = event_types
+        for ent_key in entity_keys:
+            for event_key in event_keys:
+                Entity._event_listeners[ent_key][event_key].append(listener)
 
     def __init__(self):
         super().__init__()
@@ -34,9 +41,17 @@ class Entity:
     def world(self):
         return None if self._layer is None else self._layer.world
 
-    def signal_event(self, event):
-        for listener in Entity._event_listeners:
-            listener(self, event)
+    def signal_event(self, event, value=None):
+        ent_type = type(self).__name__
+        listeners_list = [
+            Entity._event_listeners.get(None, {}).get(None, []),
+            Entity._event_listeners.get(None, {}).get(event, []),
+            Entity._event_listeners.get(ent_type, {}).get(None, []),
+            Entity._event_listeners.get(ent_type, {}).get(event, [])
+        ]
+        for listeners in listeners_list:
+            for listener in listeners:
+                listener(self, event, value)
 
     def _update_position(self):
         if self._sprite is not None:

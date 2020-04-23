@@ -11,7 +11,7 @@ def main():
     args = parse_args()
     init_logging(args.verbose)
     config = pyglet.gl.Config(alpha_size=8)
-    window = pyglet.window.Window(config=config, width=1600, height=1100)
+    window = pyglet.window.Window(config=config, width=1300, height=1100)
     game = Game(window)
     for x in range(-20, 21):
         for y in range(-20, 21):

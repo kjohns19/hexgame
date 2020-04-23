@@ -33,7 +33,7 @@ class DrawState:
     def __init__(self):
         super().__init__()
         self._batch = pyglet.graphics.Batch()
-        self._view = ViewGroup(translation=(400, 400))
+        self._view = ViewGroup(translation=(650, 550))
         self._ordered_groups = {}
 
     @property

@@ -128,6 +128,8 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
         self._health = 100
         self._diseased = False
         self._disease_resistance = disease_resistance
+        self._disease_progression = 0
+        self._cured = False
 
     @property
     def diseased(self):
@@ -155,15 +157,22 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
         return creature
 
     def update(self, game):
+        if self._diseased:
+            self._disease_progression += 1
+            self._life -= self._disease_progression//100
+            self._satiation -= self._disease_progression//100
+            self._maybe_get_cured(game)
+
         if self.age(game):
             return
 
-        self._satiation -= 1 + int(self._diseased)
+        self._satiation -= 1
         if self._satiation <= 0 or game.rand.randrange(self._satiation) == 0:
-            self._health -= 10 * (int(self._diseased)+1)
-            if self._health <= 0:
-                self.die()
-                return
+            self._health -= 10
+
+        if self._health <= 0:
+            self.die()
+            return
 
         plant = self.world.layer(1).get_entity(self.loc)
         if self._health < 100 and plant is not None:
@@ -191,11 +200,23 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
                             disease.die()
 
     def _maybe_get_disease(self, game, chance):
+        if self._cured:
+            return False
         adjusted_chance = chance * (101 - self._disease_resistance)/100
         if not self._diseased and game.rand.random() < adjusted_chance:
             self._diseased = True
             self.signal_event('diseased')
             self._sprite.image = Creature.image_diseased
+            return True
+        return False
+
+    def _maybe_get_cured(self, game):
+        chance = 1/100 * (self._disease_resistance/100)
+        if game.rand.random() < chance:
+            self._diseased = False
+            self.signal_event('disease_cured')
+            self._sprite.image = Creature.image
+            self._cured = True
             return True
         return False
 

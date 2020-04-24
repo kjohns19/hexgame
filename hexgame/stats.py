@@ -34,7 +34,7 @@ class EntityStats:
         entity.Entity.add_event_listener(
             self._handler_deaths, ent_types, ['death'])
         entity.Entity.add_event_listener(
-            self._handler_disease, ent_types, ['diseased'])
+            self._handler_disease, ent_types, ['diseased', 'disease_cured'])
 
     def _handler_births(self, ent, event, value):
         self._ents.add(ent)
@@ -54,7 +54,10 @@ class EntityStats:
 
     def _handler_disease(self, ent, event, value):
         ent_type = type(ent).__name__
-        self._stats[ent_type + 'Diseased'] += 1
+        if event == 'diseased':
+            self._stats[ent_type + 'Diseased'] += 1
+        else:
+            self._stats[ent_type + 'Diseased'] -= 1
 
     def print_header(self):
         print(' '.join(self._stats.keys()))

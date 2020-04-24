@@ -167,7 +167,7 @@ class Creature(AliveMixin, ReproducibleMixin, Entity):
 
         plant = self.world.layer(1).get_entity(self.loc)
         if self._health < 100 and plant is not None:
-            self._health += plant.nourishment//10
+            self._health = min(100, self._health + plant.nourishment//10)
             self._satiation = min(1000, self._satiation + plant.nourishment)
             if plant.diseased:
                 self._maybe_get_disease(game, 1/5)
